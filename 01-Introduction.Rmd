@@ -1,0 +1,162 @@
+---
+title: "Introduction"
+author: "Albert Mata"
+date: "`r format(Sys.time(), '%d/%m/%Y')`"
+subparagraph: true
+output:
+  pdf_document:
+    latex_engine: xelatex
+    includes:
+      in_header: pdf-styles.sty
+    toc: yes
+    toc_depth: 3
+    number_sections: false
+  html_document:
+    css: html-styles.css
+    toc: yes
+    toc_depth: 3    
+    toc_float: yes
+    number_sections: false
+mainfont: "Times New Roman"
+nocite: |
+  @lantz2015machine
+bibliography: bibliography.bib
+---
+\fontsize{12}{16} 
+\selectfont
+
+```{r include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+source("functions.R")
+```
+
+\newpage
+
+# Introducing Machine Learning
+
+The goal of today's machine learning is to assist us in making sense of the world's massive data stores. The field of machine learning provides a set of algorithms that transform data into actionable knowledge. 
+
+__Machine Learning = Available Data + Statistical Methods + Computing Power__
+
+Machine learning focuses on teaching computers how to use data to solve a problem. Data mining focuses on teaching computers to identify patterns that humans then use to solve a problem. Virtually all data mining involves the use of machine learning, but not all machine learning involves data mining. _The phrase "data mining" is also sometimes used as a pejorative to describe the deceptive practice of cherry-picking data to support a theory._
+
+Machines are not good at asking questions, or even knowing what questions to ask. They are much better at answering them, provided the question is stated in a way the computer can comprehend. Machine learning is most successful when it augments rather than replaces the specialized knowledge of a subject-matter expert. Regardless of the task, an algorithm takes data and identifies patterns that form the basis for further action. Machine learning has very little flexibility to extrapolate outside of the strict parameters it learned and knows no common sense. So, one should be extremely careful to recognize exactly what the algorithm has learned before setting it loose in the real-world settings. Also, let's keep in mind that machine learning is only as good as the data it learns from.
+
+---
+
+The basic learning process can be divided into four interrelated components:
+
+* __Data storage__. All learning must begin with data. But the ability to store and retrieve data alone is not sufficient for learning. Without a higher level of understanding, knowledge is limited exclusively to recall, meaning exclusively what is seen before and nothing else.
+
+* __Abstraction__. Stored data must be translated into broader representations and concepts. During a machine's process of knowledge representation, the computer summarizes stored raw data using a model, an explicit description of the patterns within the data. The choice of model is typically not left up to the machine. Instead, the learning task and data on hand inform model selection. The process of fitting a model to a dataset is known as training. When the model has been trained, the data is transformed into an abstract form that summarizes the original information. Imposing an assumed structure on the underlying data gives insight into the unseen by supposing a concept about how data elements are related (_gravity_).
+
+* __Generalization__. This describes the process of turning abstracted knowledge into a form that can be utilized for future action, on tasks that are similar, but not identical, to those it has seen before. Generalization involves the reduction of an hypothetical set containing every possible theory that could be established from the data into a manageable number of important findings. The algorithm employs heuristics (educated guesses about where to find the most useful inferences, _gut instinct_) to limit discovered patterns to those that will be most relevant to its future tasks. The heuristics employed by machine learning algorithms sometimes result in erroneous conclusions. The algorithm is said to have a bias if the conclusions are systematically erroneous, or wrong in a predictable manner. Paradoxically, bias is what blinds us from some information while also allowing us to utilize other information for action. It is how machine learning algorithms choose among the countless ways to understand a set of data.
+
+* __Evaluation__. This measures the learner's success in spite of its biases and uses this information to inform additional training if needed. After a model has been trained on an initial training dataset, it is evaluated on a new test dataset in order to judge how well its characterization of the training data generalizes to new, unseen data. Models fail to perfectly generalize partly due to the problem of noise (measurement error, people boycotting surveys, missing data, etc). Trying to model noise is the basis of a problem called overfitting. Because most noisy data is unexplainable by definition, attempting to explain the noise will result in erroneous conclusions that do not generalize well to new cases. A model that seems to perform well during training, but does poorly during evaluation, is said to be overfitted to the training dataset, as it does not generalize well to the test dataset.
+
+---
+
+Any machine learning algorithm follows these 5 steps to apply the learning process to real-world tasks:
+
+1. __Data collection__. Usually, the data will need to be combined into a single source like a text file, spreadsheet, or database.
+2. __Data exploration and preparation__. Fixing or cleaning so-called "messy" data, eliminating unnecessary data, and recoding the data to conform to the learner's expected inputs.
+3. __Model training__. The specific machine learning task chosen will inform the selection of an appropriate algorithm, and this algorithm will represent the data in the form of a model.
+4. __Model evaluation__. Important as each machine learning model results in a biased solution to the learning problem.
+5. __Model improvement__. If necessary, every previous step will need to be revised and improved.
+
+---
+
+Machine learning algorithms are divided into categories according to their purpose:
+
+`r note("Els que estudiem a l'assignatura són tots d'aprenentatge supervisat.")`
+
+* A __predictive model__ is used for tasks that involve the prediction of one value (the target feature) using other values (features) in the dataset. It can be used to predict past, real time or future events. The process of training a predictive model is known as __supervised learning__, as the model is given clear instruction on what it needs to learn and how it is intended to learn it. Given a set of data, a supervised learning algorithm attempts to optimize a function (the model) to find the combination of feature values that result in the target output.
+	* The often used supervised machine learning task of predicting which category an example belongs to is known as __classification__. In classification, the target feature to be predicted is a categorical feature known as the _class_, and is divided into categories called _levels_ (ordinal or not).
+	* A common form of __numeric prediction__ fits linear regression models to the input data in order to predict numeric data. Regression models are not the only type of numeric models, but they are, by far, the most widely used. They quantify in exact terms the association between inputs and the target, including both the magnitude and uncertainty of the relationship.
+
+* A __descriptive model__ is used for tasks that would benefit from the insight gained from summarizing data in new and interesting ways. Because there is no target to learn, the process of training a descriptive model is called __unsupervised learning__.
+	* Common task called __pattern discovery__ is used to identify useful associations within data (like items that are frequently purchased together). 
+	* Dividing a dataset into homogeneous groups is called __clustering__. This is sometimes used for segmentation analysis that identifies groups of individuals with similar behavior or demographic information, so that advertising campaigns could be tailored for particular audiences. 
+
+There are various reasons to choose one algorithm. For instance, within classification problems decision trees result in models that are readily understood, while the models of neural networks are notoriously difficult to interpret. If you were designing a credit-scoring model, this could be an important distinction because law often requires that the applicant must be notified about the reasons he or she was rejected for the loan. Even if the neural network is better at predicting loan defaults, if its predictions cannot be explained, then it is useless for this application.
+
+## Managing and Understanding Data
+
+Any learning algorithm is only as good as its input data, and in many cases, the input data is complex, messy, and spread across multiple sources and formats. Because of this complexity, often the largest portion of effort invested in machine learning projects is spent on data preparation and exploration.
+
+### Basic data structures in R
+
+* __Vectors__. Ordered set of _same type_ elements. 
+
+* __Factors__. Special case of vector that is solely used to represent _categorical or ordinal_ variables. Factors can be ordered or unordered. Machine learning algorithms capable of modeling ordinal data will expect _ordered_ factors.
+
+* __Lists__. Ordered set of _not necessarily same type_ elements. Often used to store various types of input and output data and sets of configuration parameters for machine learning models. The result of using vector-style operators on a list object is another list object, which is a subset of the original list. To return a single list item in its native data type, we use double brackets (`[[` and `]]`) or `$` notation.
+
+* __Data frames__. List of vectors or factors, each having exactly the same number of values, analogous to a spreadsheet or database as it has both rows and columns of data. In machine learning terms, data frame's columns are the features or attributes and rows are the examples.
+
+* __Matrices__. A matrix is a data structure that represents a two-dimensional table with rows and columns of (typically numeric) data. R's default method for loading matrices is _column-major order_ (can be overriden with `byrow = TRUE`).
+
+### Useful functions to get data in and out of R
+
+* `ls()`: Returns a vector with the names of all the data structures currently in memory. 
+
+* `rm()`: Removes one or more data structures from memory. `rm(list=ls())` clears the entire R session.
+
+* `save()`: Writes one or more data structures to a file that can be reloaded later or transferred to another system. R data files have an `.RData` extension.
+
+* `load()`: Recreates any data structures that have been saved to an `.RData` file (even overwriting existing data structures with same name). 
+
+* `read.csv()` and `write.csv()`: Imports/saves data from/to CSV files.
+
+### Methods for understanding data
+
+The better you understand your data, the better you will be able to match a machine learning model to your learning problem. Let's see some basic steps to achieve that.
+
+__$\bullet$ Explore its structure__
+
+How is the dataset organized? Is there a data dictionary maybe? Our data may or may not have meaningful variable names, so it may be necessary to do additional sleuthing to determine what a feature actually represents. Even when feature names are given, it is always prudent to be skeptical about those labels and investigate further. 
+
+__$\bullet$ Explore numeric variables__
+
+* Measure the __central tendency__ (mean and median). The median is useful as the mean is highly sensitive to outliers, or values that are atypically high or low in relation to the majority of data.
+
+* Measure __spread__ (quartiles and the five-number summary). How tightly or loosely are the values spaced? Knowing about the spread provides a sense of the data's highs and lows and whether most values are like or unlike the mean and median. Quartiles are a special case of a type of statistics called quantiles, which are numbers that divide data into equally sized quantities. The difference between Q1 and Q3 is known as the Interquartile Range (IQR) and in itself is a simple measure of spread. 
+
+* Visualize using __boxplots__. Also known as a box-and-whiskers plot. A widely used convention only allows the whiskers to extend to a minimum or maximum of 1.5 times the IQR below Q1 or above Q3. Any values that fall beyond this threshold are considered outliers and are denoted as circles or dots.
+
+* Visualize using __histograms__. An histogram uses any number of bins of an identical width and allows them to contain different number of values (while a boxplot requires that each of the four portions of data must contain the same number of values, and widens or narrows the bins as needed). Quickly diagonosing skew patterns in our data is one of the strengths of histograms as a data exploration tool.
+  
+* Understand numeric data (uniform and normal __distributions__). Many real-world phenomena generate data that can be described by the normal distribution.
+
+* Measure __spread__ (variance and standard deviation). The variance is defined as the average of the squared differences between each value and the mean value, while the standard deviation is just the square root of the variance. Larger values for variance indicate that the data are spread more widely around the mean. The standard deviation indicates, on average, how much each value differs from the mean. `r note("Next formulae use the population variance (which divides by n). R uses the sample variance (which divides by n - 1). Except for very small datasets, the distinction is minor.")`
+
+$$Var(X) = \sigma^2 = \dfrac{1}{n} \sum\limits_{i=1}^n (x_i - \mu)^2$$
+
+$$StdDev(X) = \sigma$$
+
+* Consider __68-95-99.7 rule__: 68% of the values in a normal distribution fall within one standard deviation of the mean. 95% and 99.7% of the values fall within two and three standard deviations, respectively.
+
+__$\bullet$ Explore categorical variables__
+
+Categorical data is typically examined using tables rather than summary statistics. A table that presents a single categorical variable is known as a one-way table.
+
+* Measure the __central tendency__ (mode). The mode of a feature is the value occurring most often. Variables can be unimodal or multimodal (i.e. bimodal). The mode is used in a qualitative sense to gain an understanding of important values, keeping in mind that the most common value is not necessarily a majority. It is best to think about modes in relation to the other categories: is there one category that dominates all the others or are there several? From here, we may ask what the most common values tell us about the variable being measured. It can also be helpful to consider mode while exploring numeric data (thinking about modes as the highest bars on a histogram), particularly to examine whether or not the data is multimodal.
+
+__$\bullet$ Explore relationships between variables__
+
+Some type of questions can only be addressed by looking at bivariate relationships, which consider the relationship between two variables. Relationships of more than two variables are called multivariate relationships.
+
+* Visualize relationships using __scatterplots__. A scatterplot is a diagram that visualizes a bivariate relationship. Patterns in the placement of dots reveal the underlying associations between the two features. Convention dictates that the _y_ variable is the one that is presumed to depend on the other (and is therefore known as the dependent variable).
+  * Dots in a line sloping downward $\rightarrow$ negative association. 
+  * Dots in a line sloping upward $\rightarrow$ positive association. 
+  * Dots in a flat line or randomly $\rightarrow$ no association at all.
+  * The strength of a linear association between two variables is measured by a statistic known as __correlation__.
+  * Keep in mind that not all associations form straight lines, as two variables may be related in a non linear way.
+
+* Examine relationships using __two-way cross-tabulations__. Also known as a __crosstab__ or __contingency table__, it's useful to examine a relationship between two nominal variables. It is a table in which the rows are the levels of one variable and the columns are the levels of another. Counts in each of the table's cells indicate the number of values falling into the particular row and column combination. Pearson's Chi-squared test for independence between two variables measures how likely it is that the difference in the cell counts in the table is due to chance alone. If the probability is very low, it provides strong evidence that the two variables are associated.
+
+---
+
+Useful functions for all previous steps: `str()`, `summary()`, `mean()`, `median()`, `min()`, `max()`, `range()`, `diff()`, `IQR()`, `quantile()`, `seq()`, `boxplot()`, `hist()`, `var()`, `sd()`, `table()`, `prop.table()`, `round()`, `plot()` and `CrossTable()` from `gmodels` package.  
+
+# References

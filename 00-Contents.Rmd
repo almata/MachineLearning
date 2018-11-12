@@ -1,0 +1,42 @@
+---
+title: "Apunts Machine Learning"
+author: "Albert Mata"
+date: "`r format(Sys.time(), '%d/%m/%Y')`"
+subparagraph: true
+output:
+  pdf_document:
+    latex_engine: xelatex
+    includes:
+      in_header: pdf-styles.sty
+  html_document:
+    css: html-styles.css
+mainfont: "Times New Roman"
+nocite: |
+  @lantz2015machine
+bibliography: bibliography.bib
+---
+\fontsize{12}{16} 
+\selectfont
+
+```{r include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Estudiarem les següents metodologies d'__aprenentatge supervisat__ (els capítols fan referència al llibre Machine Learning with R [@lantz2015machine]):
+
+* Algorisme de k-veïns més propers (KNN) $\rightarrow$ capítol 3
+* Naïve Bayes $\rightarrow$ capítol 4
+* Xarxes neuronals artificials $\rightarrow$ capítol 7
+* Support Vector Machines (SVM) $\rightarrow$ capítol 7
+* Arbres de decisió i Random Forests $\rightarrow$ capítols 5 i 11
+* Hidden Markov Models (HMM)
+
+## Capítols d'aquests apunts
+
+1. Introducing Machine Learning
+2. Lazy Learning - Classification Using Nearest Neighbors
+3. Evaluating Model Performance
+4. Probabilistic Learning - Classification Using Naive Bayes
+5. Black Box Methods - Neural Networks
+
+## Referències

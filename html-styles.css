@@ -1,0 +1,39 @@
+h1 { 
+	font-size: 34px; 
+	color: #37B; 
+}
+
+h2 { 
+	font-size: 24px; 
+	color: #37B; 	
+}
+
+h3 { 
+	font-size: 20px; 
+}
+
+body {
+  font-family: sans-serif;
+	font-size: 16px;
+	line-height: 26px;
+}
+
+div.tocify {
+	font-size: 12px;
+}
+
+div.level1 {
+	margin-top: 60px;
+}
+
+blockquote {
+	font-style: italic;
+	color: #C00;
+	border-left: 0px;
+	padding: 0px;
+	margin: 0px 0px 10px 0px;
+}
+
+code {
+	font-family: Inconsolata-dz;
+}

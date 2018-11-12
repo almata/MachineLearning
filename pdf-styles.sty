@@ -1,0 +1,19 @@
+\usepackage{titlesec}
+\usepackage{color}
+
+\definecolor{note}{rgb}{0.3, 0.7, 0.3}
+\definecolor{title}{rgb}{0.2, 0.5, 0.7}
+
+\titleformat{\section}
+{\color{title}\normalfont\Huge\bfseries} % Huge > huge > LARGE > Large > large > normalsize > small > footnotesize > scriptsize > tiny
+{\color{title}\thesection}{0.5em}{} % Space between number of section and title
+
+\titleformat{\subsection}
+{\color{title}\normalfont\LARGE\bfseries} % Huge > huge > LARGE > Large > large > normalsize > small > footnotesize > scriptsize > tiny
+{\color{title}\thesubsection}{0.5em}{} % Space between number of section and title
+
+\titleformat{\subsubsection}
+{\color{black}\normalfont\Large\bfseries} % Huge > huge > LARGE > Large > large > normalsize > small > footnotesize > scriptsize > tiny
+{\color{black}\thesubsubsection}{0.5em}{} % Space between number of section and title
+
+\setmonofont[Scale=0.7]{Inconsolata-dz}

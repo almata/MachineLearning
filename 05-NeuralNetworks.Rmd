@@ -1,0 +1,86 @@
+---
+title: "Neural Networks"
+author: "Albert Mata"
+date: "`r format(Sys.time(), '%d/%m/%Y')`"
+subparagraph: true
+output:
+  pdf_document:
+    latex_engine: xelatex
+    includes:
+      in_header: pdf-styles.sty
+    toc: yes
+    toc_depth: 3
+    number_sections: false
+  html_document:
+    css: html-styles.css
+    toc: yes
+    toc_depth: 3    
+    toc_float: yes
+    number_sections: false
+mainfont: "Times New Roman"
+nocite: |
+  @lantz2015machine
+bibliography: bibliography.bib
+---
+\fontsize{12}{16} 
+\selectfont
+
+```{r include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+source("functions.R")
+```
+
+\newpage
+
+# Black Box Methods - Neural Networks
+
+We talk about __black box__ processes when the mechanism that transforms the input into the output is obfuscated by an imaginary box (mainly due to the complex mathematics allowing them to function). But it's dangerous to apply black box models blindly, so we'll peek inside the box and discover that neural networks mimic the structure of animal brains to model arbitrary functions.
+
+## Understanding neural networks
+
+An __Artificial Neural Network (ANN)__ models the relationship between a set of input signals and an output signal using a model derived from our understanding of how a biological brain responds to stimuli from sensory inputs. A brain uses a network of interconnected cells called __neurons__ to create a massive parallel processor. ANN uses a network of artificial neurons or __nodes__ to solve learning problems. ANNs are versatile learners currently used for:
+
+* Speech and handwriting recognition programs.
+* Automation of smart devices like self-driving cars and self-piloting drones.
+* Scientific, social or economic phenomena such as sophisticated models of weather and climate patterns, tensile strength, fluid dynamics, etc.
+
+ANNs are black box methods best applied to problems where the input data and output data are well-defined or fairly simple, yet the process that relates them is extremely complex.
+
+### From biological to artificial neurons
+
+Biological neurons:
+
+1. Incoming signals are received by the cell's __dendrites__ and weighted according to relative importance or frequency.
+2. As the __cell body__ accumulates these signals, at some point it transmits an output signal down the __axon__.
+3. At the axon's terminals, the signal is passed to the neighboring neurons across a tiny gap known as a __synapse__.
+
+Artificial neurons:
+
+1. Input signals ($x_i$) are weighted ($w_i$) according to importance.
+2. Input signals are summed by the cell body and the signal is passed on according to an __activation function__ ($f$) that generates the output signal ($y$).
+
+$$output \ axon = y(x) = f \left( \sum_{i=1}^n w_i x_i\right)$$
+
+ANNs use neurons as building blocks to construct complex models of data with these characteristics:
+
+* An __activation function__ ($f$) transforms a neuron's combined input signals into a single output signal to be broadcasted further in the network.
+* A __network topology__ (or architecture) describes the number of neurons and layers and how they are connected.
+* A __training algorithm__ specifies how connection weights are set.
+
+__$\bullet$ Activation functions__
+
+A __threshold activation function__ is the mechanism by which the artifical neuron processes incoming information and passes it throughout the network only once a specified input threshold has been attained. For example, a neuron that fires only when the sum of input signals is at least zero (__unit step activation function__).
+
+However, the activation functions used in ANN are chosen based on their ability to demonstrate desirable mathematical characteristics and accurately model relationships among data (i.e. the most commonly used S-shaped __sigmoid activation function__):
+
+$$f(x) = \frac{1}{1 + e^{-x}}$$
+
+There are different choices for activation functions: sigmoid, linear, saturated linear, hyperbolic tangent, gaussian... Each of them will result in a different neural network model that has strengths better suited for certain learning tasks.
+
+To avoid __squashing problems__ (due to the fact that the range of input values that affect the output signal is relatively narrow) we standardize or normalize all neural network inputs so they fall within a small range around 0. This way we prevent large-valued features from dominating small-valued features. 
+
+__$\bullet$ Network topology__
+
+TBC...
+
+# References
