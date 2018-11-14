@@ -30,6 +30,226 @@ knitr::opts_chunk$set(echo = TRUE)
 source("functions.R")
 ```
 
+```{r echo=FALSE}
+library(neuralnet)
+
+plot.nn <-
+function (x, rep = NULL, x.entry = NULL, x.out = NULL, radius = 0.15,
+    arrow.length = 0.2, intercept = TRUE, intercept.factor = 0.4,
+    information = TRUE, information.pos = 0.1, col.entry.synapse = "black",
+    col.entry = "black", col.hidden = "black", col.hidden.synapse = "black",
+    col.out = "black", col.out.synapse = "black", col.intercept = "blue",
+    fontsize = 12, dimension = 6, show.weights = TRUE, file = NULL,
+    ...)
+{
+    net <- x
+    if (is.null(net$weights))
+        stop("weights were not calculated")
+    if (!is.null(file) && !is.character(file))
+        stop("'file' must be a string")
+    if (is.null(rep)) {
+        for (i in 1:length(net$weights)) {
+            if (!is.null(file))
+                file.rep <- paste(file, ".", i, sep = "")
+            else file.rep <- NULL
+            #grDevices::dev.new()
+            plot.nn(net, rep = i, x.entry, x.out, radius, arrow.length,
+                intercept, intercept.factor, information, information.pos,
+                col.entry.synapse, col.entry, col.hidden, col.hidden.synapse,
+                col.out, col.out.synapse, col.intercept, fontsize,
+                dimension, show.weights, file.rep, ...)
+        }
+    }
+    else {
+        if (is.character(file) && file.exists(file))
+            stop(sprintf("%s already exists", sQuote(file)))
+        result.matrix <- t(net$result.matrix)
+        if (rep == "best")
+            rep <- as.integer(which.min(result.matrix[, "error"]))
+        if (rep > length(net$weights))
+            stop("'rep' does not exist")
+        weights <- net$weights[[rep]]
+        if (is.null(x.entry))
+            x.entry <- 0.5 - (arrow.length/2) * length(weights)
+        if (is.null(x.out))
+            x.out <- 0.5 + (arrow.length/2) * length(weights)
+        width <- max(x.out - x.entry + 0.2, 0.8) * 8
+        radius <- radius/dimension
+        entry.label <- net$model.list$variables
+        out.label <- net$model.list$response
+        neuron.count <- array(0, length(weights) + 1)
+        neuron.count[1] <- nrow(weights[[1]]) - 1
+        neuron.count[2] <- ncol(weights[[1]])
+        x.position <- array(0, length(weights) + 1)
+        x.position[1] <- x.entry
+        x.position[length(weights) + 1] <- x.out
+        if (length(weights) > 1)
+            for (i in 2:length(weights)) {
+                neuron.count[i + 1] <- ncol(weights[[i]])
+                x.position[i] <- x.entry + (i - 1) * (x.out -
+                  x.entry)/length(weights)
+            }
+        y.step <- 1/(neuron.count + 1)
+        y.position <- array(0, length(weights) + 1)
+        y.intercept <- 1 - 2 * radius
+        information.pos <- min(min(y.step) - 0.1, 0.2)
+        if (length(entry.label) != neuron.count[1]) {
+            if (length(entry.label) < neuron.count[1]) {
+                tmp <- NULL
+                for (i in 1:(neuron.count[1] - length(entry.label))) {
+                  tmp <- c(tmp, "no name")
+                }
+                entry.label <- c(entry.label, tmp)
+            }
+        }
+        if (length(out.label) != neuron.count[length(neuron.count)]) {
+            if (length(out.label) < neuron.count[length(neuron.count)]) {
+                tmp <- NULL
+                for (i in 1:(neuron.count[length(neuron.count)] -
+                  length(out.label))) {
+                  tmp <- c(tmp, "no name")
+                }
+                out.label <- c(out.label, tmp)
+            }
+        }
+        grid::grid.newpage()
+        for (k in 1:length(weights)) {
+            for (i in 1:neuron.count[k]) {
+                y.position[k] <- y.position[k] + y.step[k]
+                y.tmp <- 0
+                for (j in 1:neuron.count[k + 1]) {
+                  y.tmp <- y.tmp + y.step[k + 1]
+                  result <- calculate.delta(c(x.position[k],
+                    x.position[k + 1]), c(y.position[k], y.tmp),
+                    radius)
+                  x <- c(x.position[k], x.position[k + 1] - result[1])
+                  y <- c(y.position[k], y.tmp + result[2])
+                  grid::grid.lines(x = x, y = y, arrow = grid::arrow(length = grid::unit(0.15,
+                    "cm"), type = "closed"), gp = grid::gpar(fill = col.hidden.synapse,
+                    col = col.hidden.synapse, ...))
+                  if (show.weights)
+                    draw.text(label = weights[[k]][neuron.count[k] -
+                      i + 2, neuron.count[k + 1] - j + 1], x = c(x.position[k],
+                      x.position[k + 1]), y = c(y.position[k],
+                      y.tmp), xy.null = 1.25 * result, color = col.hidden.synapse,
+                      fontsize = fontsize - 2, ...)
+                }
+                if (k == 1) {
+                  grid::grid.lines(x = c((x.position[1] - arrow.length),
+                    x.position[1] - radius), y = y.position[k],
+                    arrow = grid::arrow(length = grid::unit(0.15, "cm"),
+                      type = "closed"), gp = grid::gpar(fill = col.entry.synapse,
+                      col = col.entry.synapse, ...))
+                  draw.text(label = entry.label[(neuron.count[1] +
+                    1) - i], x = c((x.position - arrow.length),
+                    x.position[1] - radius), y = c(y.position[k],
+                    y.position[k]), xy.null = c(0, 0), color = col.entry.synapse,
+                    fontsize = fontsize, ...)
+                  grid::grid.circle(x = x.position[k], y = y.position[k],
+                    r = radius, gp = grid::gpar(fill = "white", col = col.entry,
+                      ...))
+                }
+                else {
+                  grid::grid.circle(x = x.position[k], y = y.position[k],
+                    r = radius, gp = grid::gpar(fill = "white", col = col.hidden,
+                      ...))
+                }
+            }
+        }
+        out <- length(neuron.count)
+        for (i in 1:neuron.count[out]) {
+            y.position[out] <- y.position[out] + y.step[out]
+            grid::grid.lines(x = c(x.position[out] + radius, x.position[out] +
+                arrow.length), y = y.position[out], arrow = grid::arrow(length = grid::unit(0.15,
+                "cm"), type = "closed"), gp = grid::gpar(fill = col.out.synapse,
+                col = col.out.synapse, ...))
+            draw.text(label = out.label[(neuron.count[out] +
+                1) - i], x = c((x.position[out] + radius), x.position[out] +
+                arrow.length), y = c(y.position[out], y.position[out]),
+                xy.null = c(0, 0), color = col.out.synapse, fontsize = fontsize,
+                ...)
+            grid::grid.circle(x = x.position[out], y = y.position[out],
+                r = radius, gp = grid::gpar(fill = "white", col = col.out,
+                  ...))
+        }
+        if (intercept) {
+            for (k in 1:length(weights)) {
+                y.tmp <- 0
+                x.intercept <- (x.position[k + 1] - x.position[k]) *
+                  intercept.factor + x.position[k]
+                for (i in 1:neuron.count[k + 1]) {
+                  y.tmp <- y.tmp + y.step[k + 1]
+                  result <- calculate.delta(c(x.intercept, x.position[k +
+                    1]), c(y.intercept, y.tmp), radius)
+                  x <- c(x.intercept, x.position[k + 1] - result[1])
+                  y <- c(y.intercept, y.tmp + result[2])
+                  grid::grid.lines(x = x, y = y, arrow = grid::arrow(length = grid::unit(0.15,
+                    "cm"), type = "closed"), gp = grid::gpar(fill = col.intercept,
+                    col = col.intercept, ...))
+                  xy.null <- cbind(x.position[k + 1] - x.intercept -
+                    2 * result[1], -(y.tmp - y.intercept + 2 *
+                    result[2]))
+                  if (show.weights)
+                    draw.text(label = weights[[k]][1, neuron.count[k +
+                      1] - i + 1], x = c(x.intercept, x.position[k +
+                      1]), y = c(y.intercept, y.tmp), xy.null = xy.null,
+                      color = col.intercept, alignment = c("right",
+                        "bottom"), fontsize = fontsize - 2, ...)
+                }
+                grid::grid.circle(x = x.intercept, y = y.intercept,
+                  r = radius, gp = grid::gpar(fill = "white", col = col.intercept,
+                    ...))
+                grid::grid.text(1, x = x.intercept, y = y.intercept,
+                  gp = grid::gpar(col = col.intercept, ...))
+            }
+        }
+        if (information)
+          grid::grid.text(paste("Error: ", round(result.matrix[rep,
+                "error"], 6), "   Steps: ", result.matrix[rep,
+                "steps"], sep = ""), x = 0.5, y = information.pos,
+                just = "bottom", gp = grid::gpar(fontsize = fontsize +
+                  2, ...))
+        if (!is.null(file)) {
+            weight.plot <- grDevices::recordPlot()
+            save(weight.plot, file = file)
+        }
+    }
+}
+calculate.delta <-
+function (x, y, r)
+{
+    delta.x <- x[2] - x[1]
+    delta.y <- y[2] - y[1]
+    x.null <- r/sqrt(delta.x^2 + delta.y^2) * delta.x
+    if (y[1] < y[2])
+        y.null <- -sqrt(r^2 - x.null^2)
+    else if (y[1] > y[2])
+        y.null <- sqrt(r^2 - x.null^2)
+    else y.null <- 0
+    c(x.null, y.null)
+}
+draw.text <-
+function (label, x, y, xy.null = c(0, 0), color, alignment = c("left",
+    "bottom"), ...)
+{
+    x.label <- x[1] + xy.null[1]
+    y.label <- y[1] - xy.null[2]
+    x.delta <- x[2] - x[1]
+    y.delta <- y[2] - y[1]
+    angle = atan(y.delta/x.delta) * (180/pi)
+    if (angle < 0)
+        angle <- angle + 0
+    else if (angle > 0)
+        angle <- angle - 0
+    if (is.numeric(label))
+        label <- round(label, 5)
+    vp <- grid::viewport(x = x.label, y = y.label, width = 0, height = ,
+        angle = angle, name = "vp1", just = alignment)
+    grid::grid.text(label, x = 0, y = grid::unit(0.75, "mm"), just = alignment,
+        gp = grid::gpar(col = color, ...), vp = vp)
+}
+```
+
 \newpage
 
 # Black Box Methods - Neural Networks
@@ -67,7 +287,7 @@ ANNs use neurons as building blocks to construct complex models of data with the
 * A __network topology__ (or architecture) describes the number of neurons and layers and how they are connected.
 * A __training algorithm__ specifies how connection weights are set.
 
-__$\bullet$ Activation functions__
+### Activation functions
 
 A __threshold activation function__ is the mechanism by which the artifical neuron processes incoming information and passes it throughout the network only once a specified input threshold has been attained. For example, a neuron that fires only when the sum of input signals is at least zero (__unit step activation function__).
 
@@ -79,8 +299,145 @@ There are different choices for activation functions: sigmoid, linear, saturated
 
 To avoid __squashing problems__ (due to the fact that the range of input values that affect the output signal is relatively narrow) we standardize or normalize all neural network inputs so they fall within a small range around 0. This way we prevent large-valued features from dominating small-valued features. 
 
-__$\bullet$ Network topology__
+### Network topology
 
-TBC...
+The ability of a neural network to learn more complex tasks is rooted in its topology, defined by:
+
+* __The number of layers__. For example, in a __single-layer network__ some neurons called __input nodes__ receive unprocessed signals from the input data, process a single feature each and use their activation functions to send signals to the __output node__, which uses its own activation function to generate a final prediction. In this process there is only one set of connection weights ($w_1$ to $w_n$), that's why it's a single-layer network. But more sophisticated __multilayer networks__ are required for most learning tasks. In these multilayer networks, every node in one layer may or may not be connected to every node in the next layer.
+
+* __Whether information is allowed to travel backward__. Networks in which the input signal is fed continously in one direction from connection to connection until it reaches the output layer are called __feedforward networks__. They offer a lot of flexibility (changing number of levels and nodes, modeling multiple outcomes, applying multiple hidden layers...). A neural network with multiple hidden layers is called a __Deep Neural Network (DNN)__ and its training is referred to as __deep learning__. Current de facto standard ANN topology is the __Multilayer Perceptron (MLP)__ (a multilayer feedforward network). *In contrast but still rarely used in practice, __recurrent networks__ (or __feedback networks__) allow signals to travel in both directions using loops and works for learning extremely complex patterns. They can add a short-term memory (__delay__) to immensely increase their power.* 
+
+* __The number of nodes within each layer of the network__. The number of input nodes is predetermined by the number of features in the input data. The number of output nodes is predetermined by the number of outcomes to be modeled or the number of class levels in the outcome. But the number of hidden nodes is free and depends on many factors. In general, more complex topologies with a greater number of connections allow the learning of more complex problems. A greater number of nodes will result in a model that more closely mirrors the training data (at risk of overfitting and being too expensive and slow). In general, we'll want to use the fewest nodes that give adequate performance in a validation dataset.
+
+### Training neural networks with backpropagation
+
+As the neural network processes the input data, connections between the neurons are strengthened or weakened and their weights are adjusted to reflect the patterns observed over time. This is very computationally intensive, which is why we use the errors __backpropagation__ algorithm to train ANNs [@rumelhart1986learning].
+
+So, multilayer feedforward networks that use the backpropagation algorithm are now common in the field of data mining.
+
+__Strengths__:
+
+* Can be adapted to classification or numeric prediction problems.
+* Capable of modeling more complex patterns than nearly any algorithm.
+* Makes few assumptions about the data's underlying relationships.
+
+__Weaknesses__:
+
+* Extremely computationally intensive and slow to train, particularly if the network topology is complex.
+* Very prone to overfitting training data.
+* Results in a complex black box model that is difficult, if not impossible, to interpret.
+
+The backpropagation algorithm iterates through many cycles (or __epochs__) of two processes. As the network has no _a priori_ knowledge, starting weights are typically set at random. Then the algorithm iterates through these two phases util a stopping criterion is reached:
+
+1. A __forward phase__ in which the neurons are activated in sequence from the input layer to the output layer, applying each neuron's weights and activation function along the way. Upon reaching the final layer, an output signal is produced.
+
+2. A __backward phase__ in which the output is compared to the true target value in the training data. The difference between the two is the error that is propagated backwards in the network to modify the connection weights between neurons in order to reduce future errors. 
+
+In order to know how much the weight for each neuron has to be changed, the algorithm uses a technique called __gradient descent__ (always look for the greatest downward slope). To do this, it uses the derivative of each neuron's activation function to identify the gradient in the direction of each of the incoming weights. The algorithm will attempt to change the weights that result in the greatest reduction in error by an amount known as the __learning rate__. The greater the learning rate, the faster the algorithm will attempt to descend down the gradients, which could reduce the training time at the risk of overshooting the valley.
+
+## Example - modeling the strength of concrete with ANNs
+
+### Step 1 - collecting data
+
+We'll utilize data on the compressive strength of concrete [@yeh1998modeling].
+
+This dataset includes 1,030 examples of concrete with some features describing the components used in the mixture (i.e. cement, slag, ash, water, superplasticizer, etc) and the aging time in days.
+
+### Step 2 - exploring and preparing the data
+
+```{r}
+concrete <- read.csv("concrete.csv")
+str(concrete)
+```
+
+We see values ranging anywhere from zero up to over a thousand, but we have already said that neural networks work best when the input data are scaled to a narrow range around zero. There exist two approaches to fix this:
+
+* If the data follow a bell-shaped curve (a normal distribution) we can use R's built-in `scale()` function.
+* If the data follow a uniform distribution or are severely nonnormal, normalization to a 0-1 range may be more appropriate.
+
+We'll use the second approach here:
+
+```{r}
+normalize <- function(x) {
+  return ((x - min(x)) / (max(x) - min(x)))
+}
+
+concrete_norm <- as.data.frame(lapply(concrete, normalize))
+summary(concrete_norm$strength)
+```
+
+We create a new variable (`concrete_norm`) because any transformation applied to the data prior to training the model will have to be applied in reverse later on in order to convert back to the original units of measurement. To facilitate this, it is a good idea to keep the original data (`concrete`).
+
+Finally, we will partition the already randomly sorted data into a training set with 75 percent of the examples and a testing set with the remaining 25 percent:
+
+```{r}
+concrete_train <- concrete_norm[1:773, ]
+concrete_test <- concrete_norm[774:1030, ]
+```
+
+### Step 3 - training a model on the data
+
+We will use a multilayer feedforward neural network from the `neuralnet` package to model the relationship between the ingredients used in concrete and the strength of the finished product. Other package with similar options are `nnet` and `RSNNS`.
+
+Initially, we train the simplest multilayer feedforward network with only a single hidden node:
+
+```{r fig.align="center", fig.height=4, fig.width=6}
+library(neuralnet)
+set.seed(12345)
+concrete_model <- neuralnet(strength ~ cement + slag + ash + water + 
+                              superplastic + coarseagg + fineagg + age, 
+                            data = concrete_train)
+plot(concrete_model)
+```
+
+We can see there is one input node for each of the eight features, followed by a single hidden node and a single output node that predicts the concrete strength. The graph also shows the weights for each of the connections and the __bias terms__ (in blue, much like the intercept in a linear equation, as a neural network with a single hidden node is somewhat similar to a linear regression model).
+
+The error measure is the __Sum of Squared Errors (SSE)__ (the sum of the squared predicted minus actual values). The lower SSE, the better predictive performance. But this only talks about the model's performance on the training data.
+
+### Step 4 - evaluating model performance
+
+We use our model to generate predictions and then compare them to the true values:
+
+```{r}
+model_results <- compute(concrete_model, concrete_test[1:8])
+```
+
+The `compute()` function returns a list with two components: `$neurons`, which stores the neurons for each layer in the network, and `$net.result`, which stores the predicted values:
+
+```{r}
+predicted_strength <- model_results$net.result
+```
+
+We can't use a confusion matrix, as this is not a classification problem but a numeric prediction. What we do is to measure the correlation between our predicted values and the true ones:
+
+\newpage
+
+```{r}
+cor(predicted_strength, concrete_test$strength)
+```
+
+Correlations close to 1 indicate strong linear relationships between two variables. A correlation here of about 0.806 indicates a fairly strong relationship. This implies our model is doing a fairly good job, even with only a single hidden node.
+
+### Step 5 - improving model performance
+
+But we can try to improve our results using a more complex topology:
+
+```{r fig.align="center", fig.height=5.1, fig.width=6}
+set.seed(12345)
+concrete_model2 <- neuralnet(strength ~ cement + slag + ash + water + 
+                               superplastic + coarseagg + fineagg + age, 
+                             data = concrete_train, hidden = 5)
+plot(concrete_model2)
+```
+
+The number of steps is much higher now (so computing this model is much more expensive). And we can also see the SSE is much lower now. But let's see how our model performs with unseen data:
+
+```{r}
+model_results2 <- compute(concrete_model2, concrete_test[1:8])
+predicted_strength2 <- model_results2$net.result
+cor(predicted_strength2, concrete_test$strength)
+```
+
+Correlation has gone from 0.806 to 0.924, which is a considerable improvement. We could try to improve even further trying different number of hidden nodes, applying different activation functions and so on.
 
 # References
