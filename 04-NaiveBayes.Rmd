@@ -294,7 +294,7 @@ convert_counts <- function(x) {
 }
 
 sms_train <- apply(sms_dtm_freq_train, MARGIN = 2, convert_counts)
-sms_test <- apply(sms_dtm_freq_test, MARGIN = 2, convert_counts)
+sms_test  <- apply(sms_dtm_freq_test, MARGIN = 2, convert_counts)
 ```
 
 ### Step 3 - training a model on the data

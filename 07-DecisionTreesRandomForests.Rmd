@@ -1,0 +1,381 @@
+---
+title: "Decision Trees & Random Forests"
+author: "Albert Mata"
+date: "`r format(Sys.time(), '%d/%m/%Y')`"
+subparagraph: true
+output:
+  pdf_document:
+    latex_engine: xelatex
+    includes:
+      in_header: pdf-styles.sty
+    toc: yes
+    toc_depth: 3
+    number_sections: false
+  html_document:
+    css: html-styles.css
+    toc: yes
+    toc_depth: 3    
+    toc_float: yes
+    number_sections: false
+mainfont: "Times New Roman"
+nocite: |
+  @lantz2015machine
+bibliography: bibliography.bib
+---
+\fontsize{12}{16} 
+\selectfont
+
+```{r include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+source("functions.R")
+```
+
+\newpage
+
+# Divide and Conquer - Classification Using Decision Trees
+
+Decision trees is a machine learning method that makes complex decisions from sets of simple choices and present its knowledge in the form of logical structures that can be understood with no statistical knowledge. This makes this model particularly useful for business strategy and process improvement.
+
+## Understanding decision trees
+
+Decision tree learners are powerful classifiers that utilize a __tree structure__ to model the relationship among the features and the potential outcomes. A tree classifier uses a structure of branching decisions, which channel examples into a final predicted class value. This structure begins at the __root node__, then has some __decision nodes__ that require choices to be made and split the data across __branches__ indicating potential outcomes (usually yes or no) of a decision, and when a final decision can be made the tree is terminated by __leaf nodes__ (or __terminal nodes__) denoting the result of the series of decisions.
+
+A great benefit of decision tree algorithms is that the flowchart-like tree structure can be output in a human-readable format, showing how and why the model works or doesn't work well for a particular task. This also makes decision trees particularly appropiate for applications in which the classification mechanism needs to be transparent i.e. for legal reasons. Some potential uses include:
+
+* Credit scoring models in which the criteria that causes an applicant to be rejected need to be clearly documented and free from bias.
+* Marketing studies of customer behavior such as satisfaction or churn, which will be shared with management or advertising agencies.
+* Diagnosis of medical conditions based on laboratory measurements, symptoms, or the rate of disease progression.
+
+In general, decision trees are perhaps the single most widely used machine learning technique, and can be applied to model almost any type of data, often with excellent out-of-the-box applications. However, they have some tendency to overfit data and they are not an ideal fit when the data has a large number of nominal features with many levels or a large number of numeric features, as this may result in a very large number of decisions and an overly complex tree.
+
+### Divide and conquer
+
+Decision trees are built using a heuristic called __recursive partitioning__ (or __divide and conquer__). This approach splits the data into subsets (ideally, starting with the feature most predictive of the target class), which are then split repeatedly into even smaller subsets (choosing the best candidate remaining feature each time to create new decision nodes) until the process stops when the algorithm determines the data within the subsets are sufficiently homogeneous or another stopping criterion has been met, i.e. in a case that:
+
+* All (or nearly all) of the examples at the node have the same class.
+* There are no remaining features to distinguish among the examples.
+* The tree has grown to a predefined size limit.
+
+It's always possible to continue to divide and conquer the data by splitting it based on specific ranges for each feature until each observation resides correctly classified in its own tiny partition. But this would surely lead to some overfit. A good rule of thumb is to stop the process when more than 80 percent of the examples in each group are from a single class.
+
+### The C5.0 decision tree algorithm 
+
+__C5.0 algorithm__ is one of the most well-known implementations of decision trees and has become the industry standard to produce decision trees, because it does well for most types of problems directly out of the box.
+
+__Strengths__:
+
+* An all-purpose classifier that does well on most problems.
+* Highly automatic learning process, which can handle numeric or nominal features, as well as missing data.
+* Excludes unimportant features.
+* Can be used on both small and large datasets.
+* Results in a model that can be interpreted without a mathematical background (for relatively small trees).
+* More efficient than other complex models.
+
+__Weaknesses__:
+
+* Decision tree models are often biased toward splits on features having a large number of levels.
+* It is easy to overfit or underfit the model.
+* Can have trouble modeling some relationships due to reliance on axis-parallel splits.
+* Small changes in the training data can result in large changes to decision logic.
+* Large trees can be difficult to interpret and the decisions they make seem counterintuitive.
+
+The first challenge that a decision tree faces is to identify which feature to split upon. The degree to which a subset of examples contains only a single class is known as __purity__ (and any subset composed of only a single class is called __pure__). C5.0 uses __entropy__ to measure purity in order to identify the best decision tree splitting candidate. The decision tree hopes to find splits that reduce entropy, ultimately increasing homogeneity within the groups. Entropy is typically measured in __bits__ and the minimum value indicates that the sample is completely homogeneous, while the maximum value indicates that the data are as diverse as possible.
+
+To use entropy to determine the optimal feature to split upon, the algorithm calculates the change in homogeneity that would result from a split on each possible feature, which is a measure known as __information gain__ (difference between the entropy in the segment before the split and the entropy in the partitions resulting from the split). The higher the information gain, the better a feature is at creating homogeneous groups after a split on this feature. If the information gain is zero, there is no reduction in entropy for splitting on this feature. The maximum information gain is equal to the entropy prior to the split, as this would imply that the entropy after the split is zero, meaning that the split results in completely homogeneous groups.
+
+A decision tree can continue to grow indefinitely, choosing splitting features and dividing the data until each example is perfectly classified or the algorithm runs out of features to split on. But this would result in an overfitted model. To avoid this, the process of __pruning__ a decision tree involves reducing its size such that it generalizes better to unseen data:
+
+* __Early stopping__ or __pre-pruning__ stops the tree from growing once it reaches a certain number of decisions or when the decision nodes contain only a small number of examples. This is very efficient, but important patterns can be missed.
+* __Post-pruning__ lets the tree grow and then prunes leaf nodes to reduce the size of the tree to a more appropriate level. This is oftem a more effective approach, as it's quite difficult to determine the optimal depth of a decision tree without growing it first.
+* __Subtree raising__ and __subtree replacement__ is a post-pruning technique in which entire branches are moved further up the tree or replaced by simpler decisions.
+
+Balancing overfitting and underfitting a decision tree is a bit of an art, but C5.0 algorithm makes it very easy to adjust the training options to see if it improves the performance on test data.
+
+## Example – identifying risky bank loans using C5.0 decision trees
+
+### Step 1 - collecting data
+
+We will develop a simple credit approval model using C5.0 decision trees. The idea behind this is to identify factors that are predictive of higher risk of default. Therefore, we need to obtain data on a large number of past bank loans and whether the loan went into default, as well as information on the applicant. We'll use data donated by Hans Hofmann to the UCI Machine Learning Data Repository [@Dua:2017].
+
+The credit dataset includes 1,000 examples on loans, plus a set of numeric and nominal features indicating the characteristics of the loan and the loan applicant. A class variable indicates whether the loan went into default. We'll try to determine patterns that predict this outcome.
+
+### Step 2 - exploring and preparing the data
+
+```{r}
+credit <- read.csv("credit.csv")
+str(credit)
+```
+
+We see the expected 1,000 observations and 17 features, which are a combination of factor and integer data types. Let's have a look at a couple of features that seem likely to predict a default:
+
+```{r}
+table(credit$checking_balance)
+```
+
+```{r}
+table(credit$savings_balance)
+```
+
+\newpage
+
+The `default` vector indicates whether the loan applicant was unable to meet the agreed payment terms and went into default:
+
+```{r}
+table(credit$default)
+```
+
+We need to partition the data into a training set with 90 percent of the examples and a testing set with the remaining 10 percent. But this time the data is not already randomly sorted, so we need to perform random sampling:
+
+```{r}
+set.seed(123)
+train_sample <- sample(1000, 900)
+str(train_sample)
+```
+
+```{r}
+credit_train <- credit[train_sample, ]
+credit_test  <- credit[-train_sample, ]
+```
+
+### Step 3 - training a model on the data
+
+We will use the C5.0 algorithm in the `C50` package to train our decision tree model. We can use `?C5.0Control` to display the help page for details on how to finely-tune the algorithm. For the first iteration of our credit approval model, we'll use the default C5.0 configuration:
+
+```{r}
+library(C50)
+credit_model <- C5.0(credit_train[-17], credit_train$default)
+credit_model
+```
+
+That __Tree size: 57__ indicates that the tree is 57 decisions deep. If we want, we can see their details (all the branches) using `summary(credit_model)`. For each branch, the numbers in parentheses indicate the number of examples meeting the criteria for that decision and the number incorrectly classified by the decision.
+
+```{r}
+summary(credit_model)
+```
+
+The __Evaluation on training data__ section indicates that the model correctly classified all but 133 of the 900 training instances for an error rate of 14.8 percent. But decision trees are known for having a tendency to overfit the model to the training data. For this reason, the error rate reported on training data may be overly optimistic and it is especially important to evaluate decision trees on a test dataset.
+
+### Step 4 - evaluating model performance
+
+We use our decision tree to generate predictions and then compare them to the true values:
+
+```{r}
+credit_pred <- predict(credit_model, credit_test)
+library(gmodels)
+CrossTable(credit_test$default, credit_pred,
+           prop.chisq = FALSE, prop.c = FALSE, prop.r = FALSE,
+           dnn = c('actual default', 'predicted default'))
+```
+
+Out of the 100 test loan application records, our model correctly predicted that 59 did not default and 14 did default, resulting in an accuracy of 73 percent and an error rate of 27 percent (instead of that 14.8 percent error rate on the training data). But the model only correctly predicted 14 of the 33 actual loan defaults (42 percent). And this type of error is a potentially very costly mistake, as it's where the bank actually loses money.
+
+### Step 5 - improving model performance
+
+If the model had predicted "no default" for every test case, it would have been correct 67 percent of the time, which is not that far from 73 percent. So we should try to improve our model. There are a couple of simple ways to adjust the C5.0 algorithm that may help to improve the performance of our model, both overall and for the more costly type of mistakes: boosting the accuracy of decision trees, and making mistakes more costlier than others.
+
+__Boosting the accuracy of decision trees__
+
+__Adaptive boosting__ is a process in which many decision trees are built and the trees vote on the best class for each example. Boosting is rooted in the notion that by combining a number of weak performing learners, you can create a team that is much stronger than any of the learners alone. Using a combination of several learners with complementary strengths and weaknesses can dramatically improve the accuracy of a classifier.
+
+```{r}
+# trials = 10 is the de facto standard, as research suggests that
+# this reduces error rates on test data by about 25 percent.
+credit_boost10 <- C5.0(credit_train[-17], credit_train$default, trials = 10)
+credit_boost10_pred <- predict(credit_boost10, credit_test)
+CrossTable(credit_test$default, credit_boost10_pred,
+           prop.chisq = FALSE, prop.c = FALSE, prop.r = FALSE,
+           dnn = c('actual default', 'predicted default'))
+```
+
+So we've reduced the total error rate from 27 percent prior to boosting down to 18 percent in the boosted model. And regarding the defaults, first model predicted 14 out of 33 and boosted model predicts 20 out of 33. Still not great results, but certainly an improvement.
+
+But then, if boosting can be added this easily, why not apply it by default to every decision tree? The reason is twofold. First, if building a decision tree once takes a great deal of computation time, building many trees may be computationally impractical. Secondly, if the training data is very noisy, then boosting might not result in an improvement at all. But if greater accuracy is needed, it's worth giving it a try.
+
+__Making mistakes more costlier than others__
+
+Giving a loan out to an applicant who is likely to default can be an expensive mistake. One solution to reduce the number of false negatives may be to reject a larger number of borderline applicants, under the assumption that the interest the bank would earn from a risky loan is far outweighed by the massive loss it would incur if the money is not paid back at all.
+
+The C5.0 algorithm allows us to assign a penalty to different types of errors in order to discourage a tree from making more costly mistakes. These penalties are designated in a __cost matrix__ which specifes how much costlier each error is, relative to any other prediction.
+
+```{r}
+# First, we specify cost matrix dimensions and names.
+matrix_dimensions <- list(c("no", "yes"), c("no", "yes"))
+names(matrix_dimensions) <- c("predicted", "actual")
+matrix_dimensions
+```
+
+```{r}
+# Second, we assign the penalty for the various types of errors.
+# No cost assigned for correct predictions.
+# Cost of 4 assigned to false negatives.
+# Cost of 1 assigned to false positives.
+error_cost <- matrix(c(0, 1, 4, 0), nrow = 2, dimnames = matrix_dimensions)
+error_cost
+```
+
+```{r}
+# Finally, we apply this cost matrix to our decision tree.
+credit_cost <- C5.0(credit_train[-17], credit_train$default, costs = error_cost)
+credit_cost_pred <- predict(credit_cost, credit_test)
+CrossTable(credit_test$default, credit_cost_pred,
+           prop.chisq = FALSE, prop.c = FALSE, prop.r = FALSE,
+           dnn = c('actual default', 'predicted default'))
+```
+
+This version makes more mistakes overall (37 percent error here versus 18 percent in the boosted case). But boosted model predicted 20 out of 33 defaults and this new model predicts 26 out of 33. This trade resulting in a reduction of false negatives at the expense of increasing false positives may be acceptable if our cost estimates were accurate.
+
+\newpage
+
+# Improving Model Performance
+
+When we want to improve the predictive performance of machine learners, we consider things as:
+
+* How to automate model performance tuning by systematically searching for the optimal set of training conditions.
+* The methods for combining models into groups that use teamwork to tackle tough learning tasks.
+* How to apply a variant of decision trees, which has quickly become popular due to its impressive performance.
+
+## Tuning stock models for better performance
+
+Some learning problems are well-suited to the stock models presented so far. But some other problems are inherently more difficult, their underlying concepts to be learned may be extremely complex, requiring an understanding of many subtle relationships, or they may be affected by random variation, making it difficult to define the signal within the noise. Developing models that perform extremely well on these difficult problems is not straightforward.
+
+The process of adjusting the model options to identify the best fit as we've done when we've added the `trials = 10` option when boosting the accuracy of decision trees is called __parameter tuning__. We did something similar when we tuned k-NN models searching for the best value of _k_, when we set number of nodes or hidden layers in ANN models, or when we chose different kernel functions in SVM models.
+
+Most machine learning algorithms allow the adjustment of at least one parameter. And some offer a large number of ways to tweak the model fit. The complexity of all the possible options can be daunting, that's why we need a more systematic approach.
+
+### Using caret for automated parameter tuning
+
+```{r include=FALSE}
+library(caret)
+```
+
+
+Rather than choosing arbitrary values for each of the model's parameters, it's better to conduct a search through many possible parameter values to find the best combination. The `caret` package provides tools to assist with automated parameter tuning. Its `train()` function serves as a standardized interface for over 175 different machine learning models for both classification and regression tasks and makes it possible to automate the search for optimal models using a choice of evaluation methods and metrics.
+
+Automated parameter tuning requires us to consider three questions:
+
+* __What type of machine learning model (and specific implementation) should be trained on the data?__ The answer will depend on whether the task is classification or numeric prediction, the format of the data, the need to avoid black box models, etc.
+
+* __Which model parameters can be adjusted, and how extensively should they be tuned to find the optimal settings?__ This is largely dictated by the choice of model, as each algorithm utilizes a unique set of parameters. The `modelLookup()` function shows information about the tuning parameters for a particular model. By default, `caret` searches at most three values for each parameter, and also lets us provide a custom search grid defined by a simple command. 
+
+```{r}
+modelLookup("C5.0")
+```
+
+* __What criteria should be used to evaluate the models to find the best candidate?__ This uses methods such as the choice of resampling strategy for creating training and test datasets and the use of model performance statistics to measure the predictive accuracy. By default, `caret` will select the candidate model with the largest value of the desired performance measure, but alternative model selection functions are provided. In general, `caret`'s defaults are reasonable, so we can begin with them and then tweak the `train()` function to design a wide variety of experiments.
+
+__Creating a simple tuned model__
+
+The simplest way to tune a learner requires us to only specify a model type via the `method` parameter:
+
+```{r}
+set.seed(300)
+m <- train(default ~ ., data = credit, method = "C5.0")
+m
+```
+
+After identifying the best model, the `train()` function uses its tuning parameters to build a model and store it in `m$finalModel`. But we can simply use `m` to make predictions:
+
+```{r}
+head(predict(m, credit))
+```
+
+```{r}
+head(predict(m, credit, type = "prob"))
+```
+
+Using the `train()` and `predict()` functions also offers a couple of benefits in addition to the automatic parameter tuning:
+
+* Any data preparation steps (centering, scaling, imputation of missing values, etc.) applied by the `train()` function will be similarly applied to the data used for generating predictions, ensuring that the steps that contributed to the best model's performance will remain in place when the model is deployed.
+* The `predict()` function provides a standardized interface for obtaining predicted class values and class probabilities, even for model types that ordinarily would require additional steps to obtain this information
+
+__Customizing the tuning process__
+
+It's possible to change `caret`'s default settings to something more specific to a learning task to try to achieve better performance. We use the `trainControl()` function to create a set of configuration options known as a __control object__, which guides the `train()` function. These options let us change the resampling strategy (`method`) or the measure used for choosing the best model (`selectionFunction`), among others.
+
+For instance, we use the following command to create a control object that uses 10-fold cross-validation and the `oneSE` selection function:
+
+```{r}
+ctrl <- trainControl(method = "cv", number = 10, selectionFunction = "oneSE")
+```
+
+The next step in defining our experiment is to create the grid of parameters to optimize. This grid must include a column named for each parameter in the desired model (prefixed by a period) and a row for each desired combination of parameter values (we can use `expand.grid()` to generate all combinations):
+
+```{r}
+grid <- expand.grid(.model = "tree",
+                    .trials = c(1, 5, 10, 15, 20, 25, 30, 35),
+                    .winnow = "FALSE")
+grid
+```
+
+The `train()` function will build a candidate model for evaluation using each row's combination of model parameters.
+
+```{r message=FALSE, warning=FALSE}
+set.seed(300)
+m <- train(default ~ ., data = credit, method = "C5.0",
+           metric = "Kappa", trControl = ctrl, tuneGrid = grid)
+m
+```
+
+### Boosting
+
+Boosting is a common ensemble-based method that makes weak learners perform as stronger learners. It uses ensembles of models trained on resampled data and a vote to determine the final prediction. This resampled datasets are constructed specifically to generate complementary learners. Each learner's vote has a weight based on its past performance. Boosting will result in performance that is often quite better and certainly no worse than the best of the models in the ensemble. 
+
+Assuming that each classifier performs better than random chance, it's possible to increase ensemble performance simply by adding additional classifiers to the group. Though boosting principles can be applied to nearly any type of model, the principles are most commonly used with decision trees.
+
+### Random forests
+
+__Random forests__ (or __decision tree forests__) is another ensemble-based method that focuses only on ensembles of decision trees, combining the base principles of bootstrap aggregating (bagging) with random feature selection to add additional diversity to the decision tree models. As the ensemble uses only a small random portion of the full feature set, random forests can handle extremely large datasets. After the ensemble of trees (so, the forest) is generated, the model uses a vote to combine the trees' predictions. 
+
+__Strengths__:
+
+* An all-purpose model that performs well on most problems.
+* Can handle noisy or missing data as well as categorical or continuous features.
+* Selects only the most important features.
+* Can be used on data with an extremely large number of features or examples.
+* Tend to be easier to use and less prone to overfitting than other ensemble-based methods.
+
+__Weaknesses__:
+
+* Unlike a decision tree, the model is not easily interpretable.
+* May require some work to tune the model to the data.
+
+We can use the `randomForest()` function in the `randomForest` package to create an ensemble of 500 trees that consider `sqrt(total_number_of_features)` random features at each split (these are values by default that can be changed). Limiting the number of random features allows for substantial random variation to occur from tree to tree.
+
+```{r message=FALSE, warning=FALSE}
+library(randomForest)
+set.seed(300)
+rf <- randomForest(default ~ ., data = credit)
+rf
+```
+
+In this case, the __out-of-bag error rate__ is pretty accurate compared to what we will find when using this model with unseen data. 
+
+As a final exercise, let's compare an auto-tuned random forest to an auto-tuned boosted C5.0 model:
+
+```{r}
+ctrl <- trainControl(method = "repeatedcv", number = 10, repeats = 10)
+```
+
+```{r message=FALSE, warning=FALSE}
+# Auto-tuned random forest.
+set.seed(300)
+grid_rf <- expand.grid(.mtry = c(2, 4, 8, 16))
+m_rf <- train(default ~ ., data = credit, method = "rf",
+              metric = "Kappa", trControl = ctrl, tuneGrid = grid_rf)
+m_rf
+```
+
+```{r message=FALSE, warning=FALSE}
+# Auto-tuned boosted C5.0 model.
+set.seed(300)
+grid_c50 <- expand.grid(.model = "tree",
+                        .trials = c(10, 20, 30, 40),
+                        .winnow = "FALSE")
+m_c50 <- train(default ~ ., data = credit, method = "C5.0",
+               metric = "Kappa", trControl = ctrl, tuneGrid = grid_c50)
+m_c50
+```
+
+The random forest model with `mtry = 16` has accuracy = 0.76 and Kappa = 0.36. It's a bit better than the best C5.0 decision tree (accuracy = 0.74 and Kappa = 0.33).
+
+# References

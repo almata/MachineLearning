@@ -104,7 +104,7 @@ We need to partition the already randomly sorted data into a training set with 8
 
 ```{r}
 letters_train <- letters[1:16000, ]
-letters_test <- letters[16001:20000, ]
+letters_test  <- letters[16001:20000, ]
 ```
 
 ### Step 3 - training a model on the data

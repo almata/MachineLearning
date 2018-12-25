@@ -152,7 +152,7 @@ Finally, we will partition the already randomly sorted data into a training set 
 
 ```{r}
 concrete_train <- concrete_norm[1:773, ]
-concrete_test <- concrete_norm[774:1030, ]
+concrete_test  <- concrete_norm[774:1030, ]
 ```
 
 ### Step 3 - training a model on the data

@@ -153,11 +153,11 @@ Finally, we need to create training and test datasets. So we divide our data int
 ```{r}
 # These include no diagnosis value.
 wbcd_train <- wbcd_n[1:469, ]
-wbcd_test <- wbcd_n[470:569, ]
+wbcd_test  <- wbcd_n[470:569, ]
 
 # These are the diagnosis values.
 wbcd_train_labels <- wbcd[1:469, 1]
-wbcd_test_labels <- wbcd[470:569, 1]
+wbcd_test_labels  <- wbcd[470:569, 1]
 ```
 
 `r note("Els registres d'aquest dataset estaven intencionadament desordenats. Si no hagués estat així i seguissin algun ordre específic, els subsets que acabem de fer no serien vàlids.")`
